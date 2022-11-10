@@ -1,8 +1,9 @@
 <?php
+/** @noinspection PhpUnused */
 
 namespace PSEIntegration\Models;
 
 class ApigeeLoginResponse
 {
-    public $access_token;
+    public string $access_token;
 }

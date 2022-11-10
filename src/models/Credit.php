@@ -17,7 +17,7 @@ class Credit
     public $companyIdentification;
 
     public $transactionValue;
-    
+
     public $vatValue;
 
     public $extradata;

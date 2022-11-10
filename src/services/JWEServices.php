@@ -2,63 +2,104 @@
 
 namespace PSEIntegration\Services;
 
-use Sop\JWX\JWE\EncryptionAlgorithm\A128CBCHS256Algorithm;
-use Sop\JWX\JWE\KeyAlgorithm\RSAESKeyAlgorithm;
-use Sop\JWX\JWE\KeyAlgorithm\DirectCEKAlgorithm;
-use Sop\JWX\JWE\KeyAlgorithm\PBES2HS256A128KWAlgorithm;
-use Sop\JWX\JWE\JWE;
-use Sop\JWX\JWK\Symmetric\SymmetricKeyJWK;
-use Sop\JWX\JWT\Header\Header;
-use Sop\JWX\JWT\Parameter\AlgorithmParameter;
-use Sop\JWX\JWT\Parameter\JWTParameter;
 use Sop\JWX\JWA\JWA;
-use Sop\JWX\JWT\Parameter\InitializationVectorParameter;
-use Sop\JWX\JWE\KeyAlgorithm\AESGCMKWAlgorithm;
-use Sop\JWX\JWE\KeyAlgorithm\KeyAlgorithmFactory;
-use Sop\JWX\JWE\KeyManagementAlgorithm;
-use Sop\JWX\JWK\JWKSet;
+use Sop\JWX\JWE\JWE;
+use Sop\JWX\JWT\Header\Header;
+use Sop\JWX\JWK\Symmetric\SymmetricKeyJWK;
+use Sop\JWX\JWT\Parameter\AlgorithmParameter;
+use Sop\JWX\JWE\KeyAlgorithm\DirectCEKAlgorithm;
+use Sop\JWX\JWE\EncryptionAlgorithm\A128CBCHS256Algorithm;
 
 class JWEServices
 {
-    public static function processEncrypt(string $message, string $key, string $customerIV)
+    /**
+     * Get encrypted text from symmetric key and generate token for it
+     * 
+     * @param string $message
+     * @param string $key
+     * @param string $customerIV
+     * @return string
+     */
+    public static function processEncrypt(string $message, string $key, string $customerIV): string
     {
         $encString = JWEServices::encrypt($message, $key, $customerIV);
-        $jwe = JWEServices::generateTokenJWE($encString, $key);
-        return $jwe;
+
+        return JWEServices::generateTokenJWE($encString, $key);
     }
 
-    public static function processDencrypt(string $message, string $key, string $customerIV)
+    /**
+     * Get encrypted text from symmetric key and custom data
+     * 
+     * @param string $message
+     * @param string $key
+     * @param string $customerIV
+     * @return bool|string
+     */
+    public static function processDecrypt(string $message, string $key, string $customerIV): bool|string
     {
-        $string = JWEServices::stringfyTokenJWE($message, $key);
-        $stringFinal = JWEServices::decrypt($string, $key, $customerIV);
-        return $stringFinal;
+        $string = JWEServices::stringFyTokenJWE($message, $key);
+
+        return JWEServices::decrypt($string, $key, $customerIV);
     }
 
-    public static function stringfyTokenJWE(string $textoencriptado, string $chaveencriptacao)
+    /**
+     * Get decrypted text from symmetric key 
+     * 
+     * @param string $encryptedText
+     * @param string $symmetricKey
+     * @return string
+     */
+    public static function stringFyTokenJWE(string $encryptedText, string $symmetricKey): string
     {
-        $jwk = SymmetricKeyJWK::fromKey($chaveencriptacao);
-        $jwe = JWE::fromCompact($textoencriptado);
-        $payload = $jwe->decryptWithJWK($jwk);
-        return $payload;
+        $jwk = SymmetricKeyJWK::fromKey($symmetricKey);
+        $jwe = JWE::fromCompact($encryptedText);
+
+        return $jwe->decryptWithJWK($jwk);
     }
 
-    public static function generateTokenJWE(string $message, string $chaveencriptacao)
+    /**
+     * Generate token from SymmetricKeyJWK
+     * 
+     * @param string $message
+     * @param string $symmetricKey
+     * @return string
+     */
+    public static function generateTokenJWE(string $message, string $symmetricKey): string
     {
-        $jwk = SymmetricKeyJWK::fromKey($chaveencriptacao);
+        $jwk = SymmetricKeyJWK::fromKey($symmetricKey);
         $header = new Header(new AlgorithmParameter(JWA::ALGO_DIR));
         $key_algo = DirectCEKAlgorithm::fromJWK($jwk, $header);
         $enc_algo = new A128CBCHS256Algorithm();
         $jwe = JWE::encrypt($message, $key_algo, $enc_algo);
+
         return $jwe->toCompact();
     }
 
-    public static function encrypt($plaintext, $password, $iv)
+    /**
+     * Encrypt text with hash and password
+     * 
+     * @param $plaintext
+     * @param $password
+     * @param $iv
+     * @return string
+     */
+    public static function encrypt($plaintext, $password, $iv): string
     {
-        return base64_encode(openssl_encrypt($plaintext, "AES-256-CBC", $password, OPENSSL_RAW_DATA, ($iv)));
+        return base64_encode(openssl_encrypt($plaintext, "AES-256-CBC", $password,
+            OPENSSL_RAW_DATA, ($iv)));
     }
-    
-    public static function decrypt($ivHashCiphertext, $password, $iv)
+
+    /**
+     * Decrypt text with hash and password
+     * 
+     * @param $ivHashCiphertext
+     * @param $password
+     * @param $iv
+     * @return false|string
+     */
+    public static function decrypt($ivHashCiphertext, $password, $iv): bool|string
     {
-        return openssl_decrypt(base64_decode($ivHashCiphertext), "AES-256-CBC", $password, OPENSSL_RAW_DATA, ($iv));
+        return openssl_decrypt(base64_decode($ivHashCiphertext), "AES-256-CBC", $password,
+            OPENSSL_RAW_DATA, ($iv));
     }
 }

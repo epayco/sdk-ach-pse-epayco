@@ -1,10 +1,11 @@
 <?php
+/** @noinspection PhpUnused */
 
 namespace PSEIntegration\Models;
 
 class Bank
 {
-    public $financialInstitutionCode;
+    public string $financialInstitutionCode;
 
-    public $financialInstitutionName;
+    public string $financialInstitutionName;
 }
