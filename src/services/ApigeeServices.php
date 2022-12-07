@@ -30,7 +30,7 @@ class ApigeeServices
 
     private string $apigeeEncryptIV;
 
-    private static string|null $apigeeToken;
+    private string|null $apigeeToken;
 
     private static int $ApigeeLoginAttempts = 0;
 
@@ -114,7 +114,7 @@ class ApigeeServices
      */
     public function login(bool $forceLogin = false): void
     {
-        if (self::$apigeeToken != null && !$forceLogin) {
+        if ($this->apigeeToken != null && !$forceLogin) {
             return;
         }
 
@@ -129,7 +129,7 @@ class ApigeeServices
         $response = RequestServices::doPostFormAPICall($this->apigeeDefaultTimeout, $this->apigeeOrganizationProdUrl, $path, $form, "", $this->certificateFile, $this->certificatePassword, $this->certificateIgnoreInvalid);
         $response = json_decode($response);
 
-        self::$apigeeToken = $response->access_token;
+        $this->apigeeToken = $response->access_token;
     }
 
     /**
@@ -143,7 +143,7 @@ class ApigeeServices
     private function post(string $method, string $content): string
     {
         $path = "psewebapinf/api/" . $method . "?apikey=" . $this->apigeeClientId;
-        $auth = "Bearer " . self::$apigeeToken;
+        $auth = "Bearer " . $this->apigeeToken;
 
         try {
             return RequestServices::doPostAPICall(
