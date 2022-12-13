@@ -30,7 +30,7 @@ class ApigeeServices
 
     private string $apigeeEncryptIV;
 
-    private string|null $apigeeToken;
+    private string|null $apigeeToken = null;
 
     private static int $ApigeeLoginAttempts = 0;
 
