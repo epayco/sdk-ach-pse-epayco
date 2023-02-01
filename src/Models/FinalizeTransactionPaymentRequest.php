@@ -6,14 +6,14 @@ class FinalizeTransactionPaymentRequest
 {
     public string $entityCode;
 
-    public string $traceabilityCode;
+    public string $trazabilityCode;
 
     public string $entityAuthorizationId;
 
-    public function __construct(string $entityCode, string $traceabilityCode, string $entityAuthorizationId)
+    public function __construct(string $entityCode, string $trazabilityCode, string $entityAuthorizationId)
     {
         $this->entityCode = $entityCode;
-        $this->traceabilityCode = $traceabilityCode;
+        $this->trazabilityCode = $trazabilityCode;
         $this->entityAuthorizationId = $entityAuthorizationId;
     }
 }
