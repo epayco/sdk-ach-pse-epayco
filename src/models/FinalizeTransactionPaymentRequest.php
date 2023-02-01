@@ -4,12 +4,12 @@ namespace PSEIntegration\Models;
 
 class FinalizeTransactionPaymentRequest
 {
-    public string $entityCode;
+    public $entityCode;
 
-    public string $trazabilityCode;
+    public $trazabilityCode;
 
-    public string $entityAuthorizationId;
-
+    public $entityAuthorizationId;
+    
     public function __construct(string $entityCode, string $trazabilityCode, string $entityAuthorizationId)
     {
         $this->entityCode = $entityCode;
