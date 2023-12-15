@@ -23,23 +23,20 @@ class JWEServices
     public static function processEncrypt(string $message, string $key, string $customerIV)
     {
         $encString = JWEServices::encrypt($message, $key, $customerIV);
-        $jwe = JWEServices::generateTokenJWE($encString, $key);
-        return $jwe;
+        return JWEServices::generateTokenJWE($encString, $key);
     }
 
     public static function processDencrypt(string $message, string $key, string $customerIV)
     {
         $string = JWEServices::stringfyTokenJWE($message, $key);
-        $stringFinal = JWEServices::decrypt($string, $key, $customerIV);
-        return $stringFinal;
+        return JWEServices::decrypt($string, $key, $customerIV);
     }
 
     public static function stringfyTokenJWE(string $textoencriptado, string $chaveencriptacao)
     {
         $jwk = SymmetricKeyJWK::fromKey($chaveencriptacao);
         $jwe = JWE::fromCompact($textoencriptado);
-        $payload = $jwe->decryptWithJWK($jwk);
-        return $payload;
+        return $jwe->decryptWithJWK($jwk);
     }
 
     public static function generateTokenJWE(string $message, string $chaveencriptacao)
