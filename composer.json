@@ -3,10 +3,12 @@
     "type": "library",
     "description": "SDK for PSE integration",
     "require": {
-        "php": "^7.2.5",
+        "php": "^8.1",
         "sop/jwx": "^0.11.0",
         "guzzlehttp/guzzle": "^7.0",
-        "netresearch/jsonmapper": "^3.1"
+        "netresearch/jsonmapper": "^3.1",
+        "illuminate/redis": "^9.45",
+        "ext-http": "*"
     },
     "autoload": {
         "psr-4": {

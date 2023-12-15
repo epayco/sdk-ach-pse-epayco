@@ -1,13 +1,22 @@
 <?php
 
-use GuzzleHttp\Client;
-use Psr\Http\Message\ResponseInterface;
-
 namespace PSEIntegration\Services;
+
+use Exception;
+use GuzzleHttp\Client;
+use HttpResponseException;
+use PSEIntegration\Exceptions\UnauthorizedException;
+use Psr\Http\Message\ResponseInterface;
 
 class RequestServices
 {
-    private static function getHttpClient($url, int $timeout, string $certFile, string $certPassword, bool $certIgnoreInvalid) : \GuzzleHttp\Client
+    private const ERROR_MESSAGES = "Call to %s returns %s";
+    private static function getHttpClient(
+        $url,
+        int $timeout,
+        string $certFile,
+        string $certPassword,
+        bool $certIgnoreInvalid) : \GuzzleHttp\Client
     {
         $config = [
             'base_uri' => $url,
@@ -25,7 +34,18 @@ class RequestServices
         return new \GuzzleHttp\Client($config);
     }
 
-    public static function doPostAPICall(int $timeout, string $url, string $method, string $content, string $auth, string $certFile, string $certPassword, bool $certIgnoreInvalid) : string
+    /**
+     * @throws Exception
+     */
+    public static function doPostAPICall(
+        int $timeout,
+        string $url,
+        string $method,
+        string $content,
+        string $auth,
+        string $certFile,
+        string $certPassword,
+        bool $certIgnoreInvalid): string
     {
         $client = RequestServices::getHttpClient($url, $timeout, $certFile, $certPassword, $certIgnoreInvalid);
 
@@ -44,13 +64,34 @@ class RequestServices
         if ($response->getStatusCode() == 200) {
             return  $response->getBody();
         } elseif ($response->getStatusCode() == 401) {
-            throw new \PSEIntegration\Exceptions\UnauthorizedException("Call to " + method + " returns " + $response->getStatusCode() + " - " + $response->getBody());
+            throw new UnauthorizedException(
+                sprintf(
+                    self::ERROR_MESSAGES,
+                    $method,
+                    $response->getStatusCode() . " - " . $response->getBody()
+                )
+            );
         } else {
-            throw new \Exception("Call to " + method + " returns - " + $response->getStatusCode() + " - " + $response->getBody());
+            trigger_error(sprintf(
+                self::ERROR_MESSAGES,
+                $method,
+                $response->getStatusCode() . " - " . $response->getBody()
+            ));
         }
     }
 
-    public static function doPostFormAPICall(int $timeout, string $url, string $method, array $form, string $auth, string $certFile, string $certPassword, bool $certIgnoreInvalid) : string
+    /**
+     * @throws HttpResponseException
+     */
+    public static function doPostFormAPICall(
+        int $timeout,
+        string $url,
+        string $method,
+        array $form,
+        string $auth,
+        string $certFile,
+        string $certPassword,
+        bool $certIgnoreInvalid): string
     {
         $client = RequestServices::getHttpClient($url, $timeout, $certFile, $certPassword, $certIgnoreInvalid);
 
@@ -69,7 +110,11 @@ class RequestServices
         if ($response->getStatusCode() == 200) {
             return  $response->getBody();
         } else {
-            throw new \Exception("Call to " + method + " returns - " + $response->getStatusCode() + " - " + $response->getBody());
+            throw new HttpResponseException(sprintf(
+                self::ERROR_MESSAGES,
+                $method,
+                $response->getStatusCode() . " - " . $response->getBody()
+            ));
         }
     }
 }

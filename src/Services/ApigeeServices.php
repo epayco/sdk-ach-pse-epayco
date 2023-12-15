@@ -2,6 +2,9 @@
 
 namespace PSEIntegration\Services;
 
+use Exception;
+use \PSEIntegration\Cache\RedisCache;
+use \PSEIntegration\Exceptions\UnauthorizedException;
 use \PSEIntegration\Services\RequestServices;
 use \PSEIntegration\Services\JWEServices;
 use \PSEIntegration\Models\GetBankListRequest;
@@ -14,9 +17,11 @@ use \PSEIntegration\Models\TransactionInformationResponse;
 use \PSEIntegration\Models\CreateTransactionPaymentMulticreditRequest;
 
 use \PSEIntegration\Models\Bank;
+use PSEIntegration\Traits\ApigeeUtils;
 
 class ApigeeServices
 {
+    use ApigeeUtils;
     private $apigeeClientId;
 
     private $apigeeClientSecret;
@@ -41,13 +46,23 @@ class ApigeeServices
 
     private $auth;
 
-    public function __construct(string $apigeeClientId, string $apigeeClientSecret, string $apigeeOrganizationProdUrl, string $apigeeEncryptIV, string $apigeeEncryptKey)
+    private RedisCache $redisCache;
+
+    private const APIGEE_TOKEN_TTL = 3000;
+
+    public function __construct(
+        string $apigeeClientId,
+        string $apigeeClientSecret,
+        string $apigeeOrganizationProdUrl,
+        string $apigeeEncryptIV,
+        string $apigeeEncryptKey)
     {
         $this->apigeeClientId = $apigeeClientId;
         $this->apigeeClientSecret = $apigeeClientSecret;
         $this->apigeeOrganizationProdUrl = $apigeeOrganizationProdUrl;
         $this->apigeeEncryptIV = $apigeeEncryptIV;
         $this->apigeeEncryptKey = $apigeeEncryptKey;
+        $this->redisCache = new RedisCache();
     }
 
     public function setApigeeDefaultTimeout(int $apigeeDefaultTimeout)
@@ -70,10 +85,13 @@ class ApigeeServices
         $this->certificateIgnoreInvalid = $certificateIgnoreInvalid;
     }
 
-    public function login($forceLogin = false)
+    public function login()
     {
-        if (ApigeeServices::$apigeeToken != null && !$forceLogin) {
-            return;
+        $key = 'ApigeeToken_' . $this->apigeeClientId;
+        $apigeeToken = $this->redisCache->get($key);
+        if ($apigeeToken) {
+            ApigeeServices::$apigeeToken = $apigeeToken;
+            return $apigeeToken;
         }
 
         $path = "oauth/client_credential/accesstoken?grant_type=client_credentials";
@@ -84,10 +102,24 @@ class ApigeeServices
             "client_secret" => $this->apigeeClientSecret
         ];
 
-        $response = RequestServices::doPostFormAPICall($this->apigeeDefaultTimeout, $this->apigeeOrganizationProdUrl, $path, $form, "", $this->certificateFile, $this->certificatePassword, $this->certificateIgnoreInvalid);
+        $response = RequestServices::doPostFormAPICall(
+            $this->apigeeDefaultTimeout,
+            $this->apigeeOrganizationProdUrl,
+            $path,
+            $form,
+            "",
+            $this->certificateFile,
+            $this->certificatePassword,
+            $this->certificateIgnoreInvalid);
         $response = json_decode($response);
 
         ApigeeServices::$apigeeToken = $response->access_token;
+
+        $this->redisCache->set(
+            $key,
+            $response->access_token,
+            self::APIGEE_TOKEN_TTL
+        );
     }
 
     private function post(string $method, string $content)
@@ -97,27 +129,35 @@ class ApigeeServices
         $this->auth = "Bearer " . ApigeeServices::$apigeeToken;
 
         try {
-            return RequestServices::doPostAPICall($this->apigeeDefaultTimeout, $this->apigeeOrganizationProdUrl, $path, $content, $this->auth, $this->certificateFile, $this->certificatePassword, $this->certificateIgnoreInvalid);
+            return RequestServices::doPostAPICall(
+                $this->apigeeDefaultTimeout,
+                $this->apigeeOrganizationProdUrl,
+                $path, $content, $this->auth,
+                $this->certificateFile,
+                $this->certificatePassword,
+                $this->certificateIgnoreInvalid);
         } catch (UnauthorizedException $e) {
             // Try login
             ApigeeServices::$apigeeLoginAttemps++;
 
             if (ApigeeServices::$apigeeLoginAttemps <= 3) {
-                login(true);
+                $this->login();
 
                 // Try again
-                return post($method, $content);
+                return $this->post($method, $content);
             } else {
-                throw e;
+                throw $e;
             }
         } catch (Exception $e) {
-            throw e;
+            throw $e;
         }
     }
     
 
     private function sendRequest(string $method, Object $message, $type)
     {
+        // Remove special characters(Pipeline and double quotation)
+        $message = $this->removePipelineDoubleQuotation((array)$message);
         // Create JWE with AES
         $jwe = JWEServices::processEncrypt(json_encode($message), $this->apigeeEncryptKey, $this->apigeeEncryptIV);
 
@@ -155,7 +195,10 @@ class ApigeeServices
     public function createTransactionPaymentMulticredit(CreateTransactionPaymentMulticreditRequest $request)
     {
         $this->login();
-        return $this->sendRequest("createTransactionPaymentMulticreditNF", $request, new CreateTransactionPaymentResponse());
+        return $this->sendRequest(
+            "createTransactionPaymentMulticreditNF",
+            $request,
+            new CreateTransactionPaymentResponse());
     }
 
     public function finalizeTransactionPayment(FinalizeTransactionPaymentRequest $request)
