@@ -2,6 +2,8 @@
 
 namespace PSEIntegration\Exceptions;
 
-class UnauthorizedException extends \RuntimeException
+use RuntimeException;
+
+class UnauthorizedException extends RuntimeException
 {
 }
