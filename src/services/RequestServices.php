@@ -6,10 +6,11 @@ namespace PSEIntegration\Services;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use PSEIntegration\Exceptions\UnauthorizedException;
+use PSEIntegration\exceptions\UnauthorizedException;
 
 class RequestServices
 {
+    private const CALL_EXCEPTION = "Call to %s returns %s - %s ";
     /**
      * Default Guzzle client
      *
@@ -63,11 +64,11 @@ class RequestServices
         if ($response->getStatusCode() == 200) {
             return  $response->getBody();
         } elseif ($response->getStatusCode() == 401) {
-            throw new UnauthorizedException(sprintf("Call to %s returns %s - %s ",
+            throw new UnauthorizedException(sprintf(self::CALL_EXCEPTION,
                 $endpoint, $response->getStatusCode(), $response->getBody()
             ));
         } else {
-            throw new Exception(sprintf("Call to %s returns %s - %s ",
+            throw new Exception(sprintf(self::CALL_EXCEPTION,
                 $endpoint, $response->getStatusCode(), $response->getBody()
             ));
         }
@@ -97,7 +98,7 @@ class RequestServices
         if ($response->getStatusCode() == 200) {
             return  $response->getBody();
         } else {
-            throw new Exception(sprintf("Call to %s returns %s - %s ",
+            throw new Exception(sprintf(self::CALL_EXCEPTION,
                 $endpoint, $response->getStatusCode(), $response->getBody()
             ));
         }
