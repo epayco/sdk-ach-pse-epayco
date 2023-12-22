@@ -5,11 +5,11 @@ namespace PSEIntegration;
 
 use JsonMapper_Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use PSEIntegration\services\ApigeeServices;
-use PSEIntegration\models\GetBankListRequest;
-use PSEIntegration\models\TransactionInformationRequest;
-use PSEIntegration\models\CreateTransactionPaymentRequest;
-use PSEIntegration\models\FinalizeTransactionPaymentRequest;
+use PSEIntegration\Services\ApigeeServices;
+use PSEIntegration\Models\GetBankListRequest;
+use PSEIntegration\Models\TransactionInformationRequest;
+use PSEIntegration\Models\CreateTransactionPaymentRequest;
+use PSEIntegration\Models\FinalizeTransactionPaymentRequest;
 
 class PSEIntegration
 {

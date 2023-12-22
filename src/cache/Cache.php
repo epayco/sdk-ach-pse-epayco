@@ -1,6 +1,6 @@
 <?php
 
-namespace PSEIntegration\cache;
+namespace PSEIntegration\Cache;
 
 interface Cache
 {

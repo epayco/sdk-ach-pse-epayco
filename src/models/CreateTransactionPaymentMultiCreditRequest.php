@@ -1,7 +1,7 @@
 <?php
 /** @noinspection PhpUnused */
 
-namespace PSEIntegration\models;
+namespace PSEIntegration\Models;
 
 /**
  * @property-read Credit[] $credits

@@ -1,6 +1,6 @@
 <?php
 
-namespace PSEIntegration\models;
+namespace PSEIntegration\Models;
 
 class CreateTransactionPaymentResponse
 {

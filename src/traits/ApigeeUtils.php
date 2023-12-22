@@ -1,6 +1,6 @@
 <?php
 
-namespace PSEIntegration\traits;
+namespace PSEIntegration\Traits;
 
 trait ApigeeUtils
 {
