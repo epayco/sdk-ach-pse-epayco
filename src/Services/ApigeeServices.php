@@ -4,6 +4,7 @@ namespace PSEIntegration\Services;
 
 use ArrayObject;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use JsonMapper;
 use JsonMapper_Exception;
 use GuzzleHttp\Exception\GuzzleException;
@@ -127,6 +128,11 @@ class ApigeeServices
         $key = 'ApigeeToken_' . $this->apigeeClientId;
         $apigeeToken = $this->redisCache->get($key);
         if ($apigeeToken) {
+            Log::info('token_skd_ach_pse', [
+                'key' => $key,
+                'from' => 'Redis',
+                'value' => $apigeeToken
+            ]);
             ApigeeServices::$apigeeToken = $apigeeToken;
             return $apigeeToken;
         }
@@ -151,6 +157,12 @@ class ApigeeServices
         $response = json_decode($response);
 
         ApigeeServices::$apigeeToken = $response->access_token;
+
+        Log::info('token_skd_ach_pse', [
+            'key' => $key,
+            'from' => 'PSE',
+            'value' => $response->access_token
+        ]);
 
         $this->redisCache->set(
             $key,
@@ -201,8 +213,17 @@ class ApigeeServices
 
     private function sendRequest(string $method, Object $message, $type)
     {
+        Log::info('message_skd_ach_pse', [
+            'state' => 'before',
+            'message' => $message
+        ]);
         // Remove special characters(Pipeline and double quotation)
         $message = $this->removePipelineDoubleQuotation((array)$message);
+
+        Log::info('message_skd_ach_pse', [
+            'state' => 'after',
+            'message' => $message
+        ]);
         // Create JWE with AES
         $jwe = JWEServices::processEncrypt(json_encode($message), $this->apigeeEncryptKey, $this->apigeeEncryptIV);
 
