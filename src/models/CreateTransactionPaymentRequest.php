@@ -1,13 +1,8 @@
 <?php
-/** @noinspection PhpUnused */
 
-namespace PSEIntegration\Models;
+namespace PSEIntegration\models;
 
-/**
- * @property-read Credit[] $credits
- */
-
-class CreateTransactionPaymentMultiCreditRequest
+class CreateTransactionPaymentRequest
 {
     public $entityCode;
 
@@ -34,8 +29,6 @@ class CreateTransactionPaymentMultiCreditRequest
     public $soliciteDate;
 
     public $paymentDescription;
-
-    public $credits;
 
     public $identificationType;
 

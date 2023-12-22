@@ -1,7 +1,7 @@
 <?php
 /** @noinspection PhpUnused */
 
-namespace PSEIntegration\Models;
+namespace PSEIntegration\models;
 
 class Bank
 {

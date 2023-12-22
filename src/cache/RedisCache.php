@@ -1,6 +1,6 @@
 <?php
 
-namespace PSEIntegration\Cache;
+namespace PSEIntegration\cache;
 
 class RedisCache implements Cache
 {
