@@ -1,4 +1,5 @@
 <?php
+/** @noinspection PhpUnused */
 
 namespace PSEIntegration\Services;
 
@@ -9,20 +10,16 @@ use JsonMapper;
 use JsonMapper_Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use PSEIntegration\Cache\RedisCache;
-use PSEIntegration\exceptions\UnauthorizedException;
-use PSEIntegration\services\RequestServices;
-use PSEIntegration\services\JWEServices;
-use PSEIntegration\models\GetBankListRequest;
-use PSEIntegration\models\CreateTransactionPaymentRequest;
-use PSEIntegration\models\CreateTransactionPaymentResponse;
-use PSEIntegration\models\FinalizeTransactionPaymentRequest;
-use PSEIntegration\models\FinalizeTransactionPaymentResponse;
-use PSEIntegration\models\TransactionInformationRequest;
-use PSEIntegration\models\TransactionInformationResponse;
-use PSEIntegration\models\CreateTransactionPaymentMulticreditRequest;
-
-use PSEIntegration\models\Bank;
-use PSEIntegration\traits\ApigeeUtils;
+use PSEIntegration\Models\GetBankListRequest;
+use PSEIntegration\Exceptions\UnauthorizedException;
+use PSEIntegration\Models\TransactionInformationRequest;
+use PSEIntegration\Models\TransactionInformationResponse;
+use PSEIntegration\Models\CreateTransactionPaymentRequest;
+use PSEIntegration\Models\CreateTransactionPaymentResponse;
+use PSEIntegration\Models\FinalizeTransactionPaymentRequest;
+use PSEIntegration\Models\FinalizeTransactionPaymentResponse;
+use PSEIntegration\Models\CreateTransactionPaymentMultiCreditRequest;
+use PSEIntegration\Traits\ApigeeUtils;
 
 class ApigeeServices
 {
@@ -37,9 +34,9 @@ class ApigeeServices
 
     private string $apigeeEncryptIV;
 
-    private static $apigeeToken;
+    private string|null $apigeeToken = null;
 
-    private static int $apigeeLoginAttemps = 0;
+    private static int $ApigeeLoginAttempts = 0;
 
     public int $apigeeDefaultTimeout = 30000;
 
@@ -49,27 +46,20 @@ class ApigeeServices
 
     public bool $certificateIgnoreInvalid = false;
 
-    private $auth;
-
     private RedisCache $redisCache;
 
     private const APIGEE_TOKEN_TTL = 3000;
 
     /**
      * Default constructor for Apigee service
-     *
      * @param string $apigeeClientId
      * @param string $apigeeClientSecret
      * @param string $apigeeOrganizationProdUrl
      * @param string $apigeeEncryptIV
      * @param string $apigeeEncryptKey
      */
-    public function __construct(
-        string $apigeeClientId,
-        string $apigeeClientSecret,
-        string $apigeeOrganizationProdUrl,
-        string $apigeeEncryptIV,
-        string $apigeeEncryptKey)
+    public function __construct(string $apigeeClientId, string $apigeeClientSecret, string $apigeeOrganizationProdUrl,
+                                string $apigeeEncryptIV, string $apigeeEncryptKey)
     {
         $this->apigeeClientId = $apigeeClientId;
         $this->apigeeClientSecret = $apigeeClientSecret;
@@ -81,7 +71,6 @@ class ApigeeServices
 
     /**
      * Set default time out
-     *
      * @param int $apigeeDefaultTimeout
      * @return void
      */
@@ -92,7 +81,6 @@ class ApigeeServices
 
     /**
      * Set custom certificate file
-     *
      * @param string $certificateFile
      * @return void
      */
@@ -103,7 +91,6 @@ class ApigeeServices
 
     /**
      * Set certificate password for file
-     *
      * @param string $certificatePassword
      * @return void
      */
@@ -114,7 +101,6 @@ class ApigeeServices
 
     /**
      * Set flag for ignore or not the SSL certificate
-     *
      * @param bool $certificateIgnoreInvalid
      * @return void
      */
@@ -123,7 +109,12 @@ class ApigeeServices
         $this->certificateIgnoreInvalid = $certificateIgnoreInvalid;
     }
 
-    public function login()
+    /**
+     * Login request by client_credentials
+     * @return void
+     * @throws GuzzleException
+     */
+    public function login(): void
     {
         $key = 'ApigeeToken_' . $this->apigeeClientId;
         $apigeeToken = $this->redisCache->get($key);
@@ -133,8 +124,7 @@ class ApigeeServices
                 'from' => 'Redis',
                 'value' => $apigeeToken
             ]);
-            ApigeeServices::$apigeeToken = $apigeeToken;
-            return $apigeeToken;
+            $this->apigeeToken = $apigeeToken;
         }
 
         $path = "oauth/client_credential/accesstoken?grant_type=client_credentials";
@@ -148,15 +138,15 @@ class ApigeeServices
         $response = RequestServices::doPostFormAPICall(
             $this->apigeeDefaultTimeout,
             $this->apigeeOrganizationProdUrl,
-            $path,
-            $form,
+            $path, $form,
             "",
             $this->certificateFile,
             $this->certificatePassword,
-            $this->certificateIgnoreInvalid);
+            $this->certificateIgnoreInvalid
+        );
         $response = json_decode($response);
 
-        ApigeeServices::$apigeeToken = $response->access_token;
+        $this->apigeeToken = $response->access_token;
 
         Log::info('token_skd_ach_pse', [
             'key' => $key,
@@ -173,44 +163,39 @@ class ApigeeServices
 
     /**
      * Generate post request with recursive send on error
-     *
      * @param string $method
      * @param string $content
      * @return string
      * @throws GuzzleException
      */
-    private function post(string $method, string $content)
+    private function post(string $method, string $content): string
     {
         $path = "psewebapinf/api/" . $method . "?apikey=" . $this->apigeeClientId;
-
-        $this->auth = "Bearer " . ApigeeServices::$apigeeToken;
+        $auth = "Bearer " . $this->apigeeToken;
 
         try {
             return RequestServices::doPostAPICall(
-                $this->apigeeDefaultTimeout,
-                $this->apigeeOrganizationProdUrl,
-                $path, $content, $this->auth,
-                $this->certificateFile,
-                $this->certificatePassword,
-                $this->certificateIgnoreInvalid);
-        } catch (UnauthorizedException $e) {
-            // Try login
-            ApigeeServices::$apigeeLoginAttemps++;
+                $this->apigeeDefaultTimeout, $this->apigeeOrganizationProdUrl, $path, $content, $auth,
+                $this->certificateFile, $this->certificatePassword, $this->certificateIgnoreInvalid
+            );
+        } catch (UnauthorizedException|Exception|GuzzleException $e) {
+            ApigeeServices::$ApigeeLoginAttempts++;
 
-            if (ApigeeServices::$apigeeLoginAttemps <= 3) {
+            if (ApigeeServices::$ApigeeLoginAttempts <= 3) {
                 $this->login();
 
-                // Try again
                 return $this->post($method, $content);
-            } else {
-                throw $e;
             }
-        } catch (Exception $e) {
+
             throw $e;
         }
     }
 
 
+    /**
+     * Send custom request
+     * @throws JsonMapper_Exception|GuzzleException
+     */
     private function sendRequest(string $method, Object $message, $type)
     {
         Log::info('message_skd_ach_pse', [
@@ -224,6 +209,7 @@ class ApigeeServices
             'state' => 'after',
             'message' => $message
         ]);
+
         // Create JWE with AES
         $jwe = JWEServices::processEncrypt(json_encode($message), $this->apigeeEncryptKey, $this->apigeeEncryptIV);
 
@@ -245,7 +231,6 @@ class ApigeeServices
 
     /**
      * Get bank list
-     *
      * @throws JsonMapper_Exception|GuzzleException
      */
     public function getBankList(GetBankListRequest $request)
@@ -256,7 +241,6 @@ class ApigeeServices
 
     /**
      * Create a simple transaction payment
-     *
      * @throws JsonMapper_Exception|GuzzleException
      */
     public function createTransactionPayment(CreateTransactionPaymentRequest $request)
@@ -272,13 +256,14 @@ class ApigeeServices
     {
         $this->login();
         return $this->sendRequest(
-            "createTransactionPaymentMultiCreditNF", $request,
-            new CreateTransactionPaymentResponse());
+            "createTransactionPaymentMultiCreditNF",
+            $request,
+            new CreateTransactionPaymentResponse()
+        );
     }
 
     /**
      * Finalize transaction from request
-     *
      * @throws JsonMapper_Exception|GuzzleException
      */
     public function finalizeTransactionPayment(FinalizeTransactionPaymentRequest $request)
@@ -289,7 +274,6 @@ class ApigeeServices
 
     /**
      * Get transaction information
-     *
      * @throws JsonMapper_Exception|GuzzleException
      */
     public function getTransactionInformation(TransactionInformationRequest $request)
