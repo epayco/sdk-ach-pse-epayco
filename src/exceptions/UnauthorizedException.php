@@ -1,6 +1,6 @@
 <?php
 
-namespace PSEIntegration\Exceptions;
+namespace PSEIntegration\exceptions;
 
 use RuntimeException;
 

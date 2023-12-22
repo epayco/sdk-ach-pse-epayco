@@ -1,6 +1,6 @@
 <?php
 
-namespace PSEIntegration\Models;
+namespace PSEIntegration\models;
 
 class GetBankListRequest
 {

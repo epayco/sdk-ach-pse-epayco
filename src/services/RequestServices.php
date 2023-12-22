@@ -1,12 +1,12 @@
 <?php
 /** @noinspection PhpUnused */
 
-namespace PSEIntegration\Services;
+namespace PSEIntegration\services;
 
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use PSEIntegration\Exceptions\UnauthorizedException;
+use PSEIntegration\exceptions\UnauthorizedException;
 
 class RequestServices
 {

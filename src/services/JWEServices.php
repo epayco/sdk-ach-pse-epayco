@@ -1,6 +1,6 @@
 <?php
 
-namespace PSEIntegration\Services;
+namespace PSEIntegration\services;
 
 use Sop\JWX\JWA\JWA;
 use Sop\JWX\JWE\JWE;
