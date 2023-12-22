@@ -14,7 +14,7 @@ class JWEServices
 {
     /**
      * Get encrypted text from symmetric key and generate token for it
-     * 
+     *
      * @param string $message
      * @param string $key
      * @param string $customerIV
@@ -29,7 +29,7 @@ class JWEServices
 
     /**
      * Get encrypted text from symmetric key and custom data
-     * 
+     *
      * @param string $message
      * @param string $key
      * @param string $customerIV
@@ -43,8 +43,8 @@ class JWEServices
     }
 
     /**
-     * Get decrypted text from symmetric key 
-     * 
+     * Get decrypted text from symmetric key
+     *
      * @param string $encryptedText
      * @param string $symmetricKey
      * @return string
@@ -59,7 +59,7 @@ class JWEServices
 
     /**
      * Generate token from SymmetricKeyJWK
-     * 
+     *
      * @param string $message
      * @param string $symmetricKey
      * @return string
@@ -77,7 +77,7 @@ class JWEServices
 
     /**
      * Encrypt text with hash and password
-     * 
+     *
      * @param $plaintext
      * @param $password
      * @param $iv
@@ -91,7 +91,7 @@ class JWEServices
 
     /**
      * Decrypt text with hash and password
-     * 
+     *
      * @param $ivHashCiphertext
      * @param $password
      * @param $iv
