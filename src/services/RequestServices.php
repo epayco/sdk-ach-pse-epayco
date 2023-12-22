@@ -1,7 +1,7 @@
 <?php
 /** @noinspection PhpUnused */
 
-namespace PSEIntegration\services;
+namespace PSEIntegration\Services;
 
 use Exception;
 use GuzzleHttp\Client;

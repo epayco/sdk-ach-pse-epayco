@@ -7,9 +7,7 @@
         "sop/jwx": "^0.11.0",
         "guzzlehttp/guzzle": "^7.0",
         "netresearch/jsonmapper": "^3.1",
-        "illuminate/redis": "^9.45",
-        "ext-http": "*",
-      "ext-openssl": "*"
+        "illuminate/redis": "^9.45"
     },
     "autoload": {
         "psr-4": {

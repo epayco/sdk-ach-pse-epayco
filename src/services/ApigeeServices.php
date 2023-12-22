@@ -1,6 +1,6 @@
 <?php
 
-namespace PSEIntegration\services;
+namespace PSEIntegration\Services;
 
 use ArrayObject;
 use Exception;
