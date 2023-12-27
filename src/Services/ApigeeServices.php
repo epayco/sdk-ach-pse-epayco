@@ -116,7 +116,8 @@ class ApigeeServices
      */
     public function login(): void
     {
-        $key = 'ApigeeToken';
+        $domain = preg_replace("/^https?:\/\//i", "", $this->apigeeOrganizationProdUrl);
+        $key = 'apigee-token-' . $domain;
         $apigeeToken = $this->redisCache->get($key);
         if ($apigeeToken) {
             Log::info('token_skd_ach_pse', [
