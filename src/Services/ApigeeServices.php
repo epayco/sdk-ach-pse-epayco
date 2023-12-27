@@ -116,7 +116,7 @@ class ApigeeServices
      */
     public function login(): void
     {
-        $key = 'ApigeeToken_' . $this->apigeeClientId;
+        $key = 'ApigeeToken';
         $apigeeToken = $this->redisCache->get($key);
         if ($apigeeToken) {
             Log::info('token_skd_ach_pse', [
