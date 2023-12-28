@@ -114,7 +114,7 @@ class ApigeeServices
      * @return string|null
      * @throws GuzzleException
      */
-    public function login(): null|string
+    public function login(): ?string
     {
         $domain = preg_replace("/^https?:\/\//i", "", $this->apigeeOrganizationProdUrl);
         $key = 'apigee-token-' . $domain;
@@ -161,6 +161,8 @@ class ApigeeServices
             $response->access_token,
             self::APIGEE_TOKEN_TTL
         );
+
+        return $this->apigeeToken;
     }
 
     /**
