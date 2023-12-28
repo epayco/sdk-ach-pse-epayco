@@ -111,10 +111,10 @@ class ApigeeServices
 
     /**
      * Login request by client_credentials
-     * @return void
+     * @return string|null
      * @throws GuzzleException
      */
-    public function login(): void
+    public function login(): null|string
     {
         $domain = preg_replace("/^https?:\/\//i", "", $this->apigeeOrganizationProdUrl);
         $key = 'apigee-token-' . $domain;
@@ -126,6 +126,7 @@ class ApigeeServices
                 'value' => $apigeeToken
             ]);
             $this->apigeeToken = $apigeeToken;
+            return $apigeeToken;
         }
 
         $path = "oauth/client_credential/accesstoken?grant_type=client_credentials";
