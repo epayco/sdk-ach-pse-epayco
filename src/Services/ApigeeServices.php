@@ -46,9 +46,12 @@ class ApigeeServices
 
     public bool $certificateIgnoreInvalid = false;
 
+    private string $domainFromUrl;
+
     private RedisCache $redisCache;
 
     private const APIGEE_TOKEN_TTL = 3000;
+    private const APIGEE_BANK_LIST_TTL = 60;
 
     /**
      * Default constructor for Apigee service
@@ -67,6 +70,7 @@ class ApigeeServices
         $this->apigeeEncryptIV = $apigeeEncryptIV;
         $this->apigeeEncryptKey = $apigeeEncryptKey;
         $this->redisCache = new RedisCache();
+        $this->domainFromUrl = preg_replace("/^https?:\/\//i", "", $this->apigeeOrganizationProdUrl);
     }
 
     /**
@@ -116,8 +120,7 @@ class ApigeeServices
      */
     public function login(): ?string
     {
-        $domain = preg_replace("/^https?:\/\//i", "", $this->apigeeOrganizationProdUrl);
-        $key = 'apigee-token-' . $domain;
+        $key = 'apigee-token-' . $this->domainFromUrl;
         $apigeeToken = $this->redisCache->get($key);
         if ($apigeeToken) {
             Log::info('token_skd_ach_pse', [
@@ -174,7 +177,7 @@ class ApigeeServices
      */
     private function post(string $method, string $content): string
     {
-        $path = "psewebapinf/api/" . $method . "?apikey=" . $this->apigeeClientId;
+        $path = "v2/psewebapinf/api/" . $method . "?apikey=" . $this->apigeeClientId;
         $auth = "Bearer " . $this->apigeeToken;
 
         try {
@@ -240,7 +243,32 @@ class ApigeeServices
     public function getBankList(GetBankListRequest $request)
     {
         $this->login();
-        return $this->sendRequest("GetBankListNF", $request, "\PSEIntegration\Models\Bank");
+        $key = 'apigee-bank-list-' . $this->domainFromUrl;
+        $apigeeBankList = $this->redisCache->get($key);
+        if ($apigeeBankList) {
+            Log::info('banklist_skd_ach_pse', [
+                'key' => $key,
+                'from' => 'Redis',
+                'value' => $apigeeBankList
+            ]);
+            return $apigeeBankList;
+        }
+
+        $bankList = $this->sendRequest("GetBankListNF", $request, "\PSEIntegration\Models\Bank");
+
+        Log::info('banklist_skd_ach_pse', [
+            'key' => $key,
+            'from' => 'PSE',
+            'value' => $bankList
+        ]);
+
+        $this->redisCache->set(
+            $key,
+            $bankList,
+            self::APIGEE_BANK_LIST_TTL
+        );
+
+        return $bankList;
     }
 
     /**

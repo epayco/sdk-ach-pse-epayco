@@ -3,15 +3,17 @@
 namespace PSEIntegration\Services;
 
 use Sop\JWX\JWA\JWA;
+use Sop\JWX\JWE\EncryptionAlgorithm\A256GCMAlgorithm;
 use Sop\JWX\JWE\JWE;
 use Sop\JWX\JWT\Header\Header;
 use Sop\JWX\JWK\Symmetric\SymmetricKeyJWK;
 use Sop\JWX\JWT\Parameter\AlgorithmParameter;
 use Sop\JWX\JWE\KeyAlgorithm\DirectCEKAlgorithm;
-use Sop\JWX\JWE\EncryptionAlgorithm\A128CBCHS256Algorithm;
 
 class JWEServices
 {
+    private const CIPHER_ALGORITHM = 'AES-256-GCM';
+    private const TAG_LENGTH = 16;
     /**
      * Get encrypted text from symmetric key and generate token for it
      *
@@ -24,7 +26,7 @@ class JWEServices
     {
         $encString = JWEServices::encrypt($message, $key, $customerIV);
 
-        return JWEServices::generateTokenJWE($encString, $key);
+        return JWEServices::generateTokenJWE($encString, $key, $customerIV);
     }
 
     /**
@@ -69,7 +71,7 @@ class JWEServices
         $jwk = SymmetricKeyJWK::fromKey($symmetricKey);
         $header = new Header(new AlgorithmParameter(JWA::ALGO_DIR));
         $key_algo = DirectCEKAlgorithm::fromJWK($jwk, $header);
-        $enc_algo = new A128CBCHS256Algorithm();
+        $enc_algo = new A256GCMAlgorithm();
         $jwe = JWE::encrypt($message, $key_algo, $enc_algo);
 
         return $jwe->toCompact();
@@ -81,12 +83,24 @@ class JWEServices
      * @param $plaintext
      * @param $password
      * @param $iv
-     * @return string
+     * @return string|null
      */
-    public static function encrypt($plaintext, $password, $iv): string
+    public static function encrypt($plaintext, $password, $iv): ?string
     {
-        return base64_encode(openssl_encrypt($plaintext, "AES-256-CBC", $password,
-            OPENSSL_RAW_DATA, ($iv)));
+        $tag = "";
+
+        $ciphertext = openssl_encrypt(
+            $plaintext,
+            self::CIPHER_ALGORITHM,
+            $password,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag,
+            "",
+            self::TAG_LENGTH
+        );
+
+        return base64_encode($iv.$ciphertext.$tag);
     }
 
     /**
@@ -99,7 +113,18 @@ class JWEServices
      */
     public static function decrypt($ivHashCiphertext, $password, $iv): bool|string
     {
-        return openssl_decrypt(base64_decode($ivHashCiphertext), "AES-256-CBC", $password,
-            OPENSSL_RAW_DATA, ($iv));
+        $decodedText = base64_decode($ivHashCiphertext);
+        $tag = substr($decodedText, -self::TAG_LENGTH);
+        $ivLength = strlen($iv);
+        $encryptText = substr($decodedText, $ivLength, -self::TAG_LENGTH);
+
+        return openssl_decrypt(
+            $encryptText,
+            self::CIPHER_ALGORITHM,
+            $password,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
     }
 }
