@@ -180,6 +180,11 @@ class ApigeeServices
         $path = "v2/psewebapinf/api/" . $method . "?apikey=" . $this->apigeeClientId;
         $auth = "Bearer " . $this->apigeeToken;
 
+        Log::info('post_skd_ach_pse', [
+            'url' => $path,
+            'method' => $method
+        ]);
+
         try {
             return RequestServices::doPostAPICall(
                 $this->apigeeDefaultTimeout, $this->apigeeOrganizationProdUrl, $path, $content, $auth,
