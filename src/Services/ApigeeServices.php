@@ -215,6 +215,17 @@ class ApigeeServices
         }
     }
 
+    // Reset Redis SDk cache
+    public function deleteRedisSdkCache(){
+        $key = 'apigee-bank-list-' . $this->domainFromUrl;
+        $this->redisCache->delete($key);
+        $testDelete = $this->redisCache->get($key);
+        if (is_null($testDelete)) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Get bank list
      * @throws JsonMapper_Exception|GuzzleException
