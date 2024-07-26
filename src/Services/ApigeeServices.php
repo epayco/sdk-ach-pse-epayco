@@ -5,7 +5,6 @@ namespace PSEIntegration\Services;
 
 use ArrayObject;
 use Exception;
-use Illuminate\Support\Facades\Log;
 use JsonMapper;
 use JsonMapper_Exception;
 use GuzzleHttp\Exception\GuzzleException;
@@ -123,11 +122,6 @@ class ApigeeServices
         $key = 'apigee-token-' . $this->domainFromUrl;
         $apigeeToken = $this->redisCache->get($key);
         if ($apigeeToken) {
-            Log::info('token_skd_ach_pse', [
-                'key' => $key,
-                'from' => 'Redis',
-                'value' => $apigeeToken
-            ]);
             $this->apigeeToken = $apigeeToken;
             return $apigeeToken;
         }
@@ -153,12 +147,6 @@ class ApigeeServices
 
         $this->apigeeToken = $response->access_token;
 
-        Log::info('token_skd_ach_pse', [
-            'key' => $key,
-            'from' => 'PSE',
-            'value' => $response->access_token
-        ]);
-
         $this->redisCache->set(
             $key,
             $response->access_token,
@@ -179,11 +167,6 @@ class ApigeeServices
     {
         $path = "v2/psewebapinf/api/" . $method . "?apikey=" . $this->apigeeClientId;
         $auth = "Bearer " . $this->apigeeToken;
-
-        Log::info('post_skd_ach_pse', [
-            'url' => $path,
-            'method' => $method
-        ]);
 
         try {
             return RequestServices::doPostAPICall(
@@ -210,17 +193,8 @@ class ApigeeServices
      */
     private function sendRequest(string $method, Object $message, $type)
     {
-        Log::info('message_skd_ach_pse', [
-            'state' => 'before',
-            'message' => $message
-        ]);
         // Remove special characters(Pipeline and double quotation)
         $message = $this->removePipelineDoubleQuotation((array)$message);
-
-        Log::info('message_skd_ach_pse', [
-            'state' => 'after',
-            'message' => $message
-        ]);
 
         // Create JWE with AES
         $jwe = JWEServices::processEncrypt(json_encode($message), $this->apigeeEncryptKey, $this->apigeeEncryptIV);
@@ -241,6 +215,17 @@ class ApigeeServices
         }
     }
 
+    // Reset Redis SDk cache
+    public function deleteRedisSdkCache(){
+        $key = 'apigee-bank-list-' . $this->domainFromUrl;
+        $this->redisCache->delete($key);
+        $testDelete = $this->redisCache->get($key);
+        if (is_null($testDelete)) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Get bank list
      * @throws JsonMapper_Exception|GuzzleException
@@ -251,21 +236,10 @@ class ApigeeServices
         $key = 'apigee-bank-list-' . $this->domainFromUrl;
         $apigeeBankList = $this->redisCache->get($key);
         if ($apigeeBankList) {
-            Log::info('banklist_skd_ach_pse', [
-                'key' => $key,
-                'from' => 'Redis',
-                'value' => $apigeeBankList
-            ]);
             return $apigeeBankList;
         }
 
         $bankList = $this->sendRequest("GetBankListNF", $request, "\PSEIntegration\Models\Bank");
-
-        Log::info('banklist_skd_ach_pse', [
-            'key' => $key,
-            'from' => 'PSE',
-            'value' => $bankList
-        ]);
 
         $this->redisCache->set(
             $key,
