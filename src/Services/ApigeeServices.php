@@ -7,6 +7,7 @@ use ArrayObject;
 use Exception;
 use JsonMapper;
 use JsonMapper_Exception;
+use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Exception\GuzzleException;
 use PSEIntegration\Cache\RedisCache;
 use PSEIntegration\Models\GetBankListRequest;
@@ -236,10 +237,21 @@ class ApigeeServices
         $key = 'apigee-bank-list-' . $this->domainFromUrl;
         $apigeeBankList = $this->redisCache->get($key);
         if ($apigeeBankList) {
+            Log::info('banklist_skd_ach_pse', [
+                'key' => $key,
+                'from' => 'Redis',
+                'value' => $apigeeBankList
+            ]);
             return $apigeeBankList;
         }
 
         $bankList = $this->sendRequest("GetBankListNF", $request, "\PSEIntegration\Models\Bank");
+
+        Log::info('banklist_skd_ach_pse', [
+            'key' => $key,
+            'from' => 'PSE',
+            'value' => $bankList
+        ]);
 
         $this->redisCache->set(
             $key,
