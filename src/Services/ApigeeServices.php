@@ -19,6 +19,7 @@ use PSEIntegration\Models\FinalizeTransactionPaymentRequest;
 use PSEIntegration\Models\FinalizeTransactionPaymentResponse;
 use PSEIntegration\Models\CreateTransactionPaymentMultiCreditRequest;
 use PSEIntegration\Traits\ApigeeUtils;
+use Illuminate\Support\Facades\Log;
 
 class ApigeeServices
 {
@@ -236,10 +237,21 @@ class ApigeeServices
         $key = 'apigee-bank-list-' . $this->domainFromUrl;
         $apigeeBankList = $this->redisCache->get($key);
         if ($apigeeBankList) {
+            Log::info('banklist_skd_ach_pse', [
+                'key' => $key,
+                'from' => 'Redis',
+                'value' => $apigeeBankList
+            ]);
             return $apigeeBankList;
         }
 
         $bankList = $this->sendRequest("GetBankListNF", $request, "\PSEIntegration\Models\Bank");
+
+        Log::info('banklist_skd_ach_pse', [
+            'key' => $key,
+            'from' => 'Redis',
+            'value' => $apigeeBankList
+        ]);
 
         $this->redisCache->set(
             $key,
