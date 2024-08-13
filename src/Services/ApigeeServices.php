@@ -51,7 +51,7 @@ class ApigeeServices
     private RedisCache $redisCache;
 
     private const APIGEE_TOKEN_TTL = 3000;
-    private const APIGEE_BANK_LIST_TTL = 60;
+    private const APIGEE_BANK_LIST_TTL = 1440;
 
     /**
      * Default constructor for Apigee service
