@@ -18,7 +18,6 @@ class PSEIntegration
 
     /**
      * Class for get pse transactions information
-     * 
      * @param string $clientId
      * @param string $clientSecret
      * @param string $organizationProdUrl
@@ -33,7 +32,6 @@ class PSEIntegration
 
     /**
      * Set default time out
-     * 
      * @param int $timeout
      * @return void
      */
@@ -44,7 +42,6 @@ class PSEIntegration
 
     /**
      * Set flag for ignore or not the SSL certificate
-     * 
      * @param bool $certificateIgnoreInvalid
      * @return void
      */
@@ -55,7 +52,6 @@ class PSEIntegration
 
     /**
      * Set custom certificate file
-     * 
      * @param string $certificateFile
      * @param string $certificatePassword
      * @return void
@@ -68,7 +64,6 @@ class PSEIntegration
 
     /**
      * Get bank list
-     * 
      * @throws JsonMapper_Exception
      * @throws GuzzleException
      */
@@ -77,9 +72,12 @@ class PSEIntegration
         return $this->services->getBankList($request);
     }
 
+    public function deleteRedisSdkCache(){ 
+        return $this->services->deleteRedisSdkCache();
+    }
+
     /**
      * Create a simple transaction payment
-     * 
      * @throws JsonMapper_Exception
      * @throws GuzzleException
      */
@@ -90,7 +88,6 @@ class PSEIntegration
 
     /**
      * Finalize transaction from request
-     * 
      * @throws JsonMapper_Exception
      * @throws GuzzleException
      */
@@ -101,7 +98,6 @@ class PSEIntegration
 
     /**
      * Get transaction information
-     * 
      * @throws JsonMapper_Exception
      * @throws GuzzleException
      */
