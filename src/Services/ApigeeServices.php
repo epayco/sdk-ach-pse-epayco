@@ -7,6 +7,7 @@ use ArrayObject;
 use Exception;
 use JsonMapper;
 use JsonMapper_Exception;
+use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Exception\GuzzleException;
 use PSEIntegration\Cache\RedisCache;
 use PSEIntegration\Models\GetBankListRequest;
@@ -50,7 +51,7 @@ class ApigeeServices
     private RedisCache $redisCache;
 
     private const APIGEE_TOKEN_TTL = 3000;
-    private const APIGEE_BANK_LIST_TTL = 60;
+    private const APIGEE_BANK_LIST_TTL = 86400; // seconds
 
     /**
      * Default constructor for Apigee service
@@ -215,6 +216,17 @@ class ApigeeServices
         }
     }
 
+    // Reset Redis SDk cache
+    public function deleteRedisSdkCache(){
+        $key = 'apigee-bank-list-' . $this->domainFromUrl;
+        $this->redisCache->delete($key);
+        $testDelete = $this->redisCache->get($key);
+        if (is_null($testDelete)) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Get bank list
      * @throws JsonMapper_Exception|GuzzleException
@@ -225,10 +237,21 @@ class ApigeeServices
         $key = 'apigee-bank-list-' . $this->domainFromUrl;
         $apigeeBankList = $this->redisCache->get($key);
         if ($apigeeBankList) {
+            Log::info('banklist_skd_ach_pse', [
+                'key' => $key,
+                'from' => 'Redis',
+                'value' => $apigeeBankList
+            ]);
             return $apigeeBankList;
         }
 
         $bankList = $this->sendRequest("GetBankListNF", $request, "\PSEIntegration\Models\Bank");
+
+        Log::info('banklist_skd_ach_pse', [
+            'key' => $key,
+            'from' => 'PSE',
+            'value' => $bankList
+        ]);
 
         $this->redisCache->set(
             $key,

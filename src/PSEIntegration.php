@@ -72,6 +72,10 @@ class PSEIntegration
         return $this->services->getBankList($request);
     }
 
+    public function deleteRedisSdkCache(){ 
+        return $this->services->deleteRedisSdkCache();
+    }
+
     /**
      * Create a simple transaction payment
      * @throws JsonMapper_Exception
