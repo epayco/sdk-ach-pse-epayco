@@ -4,9 +4,12 @@ namespace PSEIntegration\Traits;
 
 trait ApigeeUtils
 {
-    public function removePipeline($text): string
+    public function removePipeline($text)
     {
-        return str_ireplace('|', '', $text);
+        if (is_string($text)) {
+            return str_ireplace('|', '', $text);
+        }
+        return $text;
     }
 
     public function removeDoubleQuotation($text): string
