@@ -9,6 +9,7 @@ use PSEIntegration\Services\ApigeeServices;
 use PSEIntegration\Models\GetBankListRequest;
 use PSEIntegration\Models\TransactionInformationRequest;
 use PSEIntegration\Models\CreateTransactionPaymentRequest;
+use PSEIntegration\Models\CreateTransactionPaymentMultiCreditRequest;
 use PSEIntegration\Models\FinalizeTransactionPaymentRequest;
 
 class PSEIntegration
@@ -84,6 +85,16 @@ class PSEIntegration
     public function createTransactionPayment(CreateTransactionPaymentRequest $request)
     {
         return $this->services->createTransactionPayment($request);
+    }
+
+    /**
+     * Create a multi-credit transaction payment (dispersion)
+     * @throws JsonMapper_Exception
+     * @throws GuzzleException
+     */
+    public function createTransactionPaymentMultiCredit(CreateTransactionPaymentMultiCreditRequest $request)
+    {
+        return $this->services->createTransactionPaymentMultiCredit($request);
     }
 
     /**
