@@ -12,9 +12,20 @@ trait ApigeeUtils
         return $text;
     }
 
-    public function removeDoubleQuotation($text): string
+    public function removeDoubleQuotation($text)
     {
-        return str_ireplace('"', '', $text);
+        // Handle arrays by processing each element recursively
+        if (is_array($text)) {
+            return array_map([$this, 'removeDoubleQuotation'], $text);
+        }
+
+        // Handle strings normally
+        if (is_string($text)) {
+            return str_ireplace('"', '', $text);
+        }
+
+        // Return other types unchanged
+        return $text;
     }
 
     public function removePipelineDoubleQuotation(array $request): ?array
