@@ -46,6 +46,10 @@ class ApigeeServices
 
     public bool $certificateIgnoreInvalid = false;
 
+    public int $retryCount = 5;
+
+    public int $retryDelay = 1000;
+
     private string $domainFromUrl;
 
     private RedisCache $redisCache;
@@ -60,15 +64,20 @@ class ApigeeServices
      * @param string $apigeeOrganizationProdUrl
      * @param string $apigeeEncryptIV
      * @param string $apigeeEncryptKey
+     * @param int $retryCount Number of retry attempts for transient failures
+     * @param int $retryDelay Delay between retries in milliseconds
      */
     public function __construct(string $apigeeClientId, string $apigeeClientSecret, string $apigeeOrganizationProdUrl,
-                                string $apigeeEncryptIV, string $apigeeEncryptKey)
+                                string $apigeeEncryptIV, string $apigeeEncryptKey,
+                                int $retryCount = 5, int $retryDelay = 1000)
     {
         $this->apigeeClientId = $apigeeClientId;
         $this->apigeeClientSecret = $apigeeClientSecret;
         $this->apigeeOrganizationProdUrl = $apigeeOrganizationProdUrl;
         $this->apigeeEncryptIV = $apigeeEncryptIV;
         $this->apigeeEncryptKey = $apigeeEncryptKey;
+        $this->retryCount = $retryCount;
+        $this->retryDelay = $retryDelay;
         $this->redisCache = new RedisCache();
         $this->domainFromUrl = preg_replace("/^https?:\/\//i", "", $this->apigeeOrganizationProdUrl);
     }
@@ -142,7 +151,9 @@ class ApigeeServices
             "",
             $this->certificateFile,
             $this->certificatePassword,
-            $this->certificateIgnoreInvalid
+            $this->certificateIgnoreInvalid,
+            $this->retryCount,
+            $this->retryDelay
         );
         $response = json_decode($response);
 
@@ -172,7 +183,8 @@ class ApigeeServices
         try {
             return RequestServices::doPostAPICall(
                 $this->apigeeDefaultTimeout, $this->apigeeOrganizationProdUrl, $path, $content, $auth,
-                $this->certificateFile, $this->certificatePassword, $this->certificateIgnoreInvalid
+                $this->certificateFile, $this->certificatePassword, $this->certificateIgnoreInvalid,
+                $this->retryCount, $this->retryDelay
             );
         } catch (UnauthorizedException|Exception|GuzzleException $e) {
             ApigeeServices::$ApigeeLoginAttempts++;

@@ -24,11 +24,15 @@ class PSEIntegration
      * @param string $organizationProdUrl
      * @param string $encryptIV
      * @param string $encryptKey
+     * @param int $retryCount Number of retry attempts for transient failures (default: 5)
+     * @param int $retryDelay Delay between retries in milliseconds (default: 1000)
      */
     public function __construct(string $clientId, string $clientSecret, string $organizationProdUrl,
-                                string $encryptIV, string $encryptKey)
+                                string $encryptIV, string $encryptKey,
+                                int $retryCount = 5, int $retryDelay = 1000)
     {
-        $this->services = new ApigeeServices($clientId, $clientSecret, $organizationProdUrl, $encryptIV, $encryptKey);
+        $this->services = new ApigeeServices($clientId, $clientSecret, $organizationProdUrl, $encryptIV, $encryptKey,
+            $retryCount, $retryDelay);
     }
 
     /**
